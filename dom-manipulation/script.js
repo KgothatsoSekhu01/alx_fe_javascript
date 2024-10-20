@@ -140,8 +140,7 @@ window.onload = function() {
         const quote = JSON.parse(lastViewedQuote);
         document.getElementById("quoteDisplay").innerHTML = `"${quote.text}" - <strong>${quote.category}</strong>`;
     }
-
-};const quotesContainer = document.getElementById('quotes');
+    const quotesContainer = document.getElementById('quotes');
 const notificationDiv = document.getElementById('notification');
 
 // Simulated local storage for quotes
@@ -193,14 +192,27 @@ async function createQuote() {
     const newQuote = {
         title: `Quote Title ${localQuotes.length + 1}`,
         body: 'This is a new quote body.',
-        userId: 1,
-        id: localQuotes.length + 1 // Simulating unique ID
+        userId: 1
     };
 
-    localQuotes.push(newQuote);
-    localStorage.setItem('quotes', JSON.stringify(localQuotes));
-    showNotification(`New quote created: "${newQuote.title}"`);
-    displayQuotes();
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newQuote)
+        });
+
+        const data = await response.json();
+        // Assuming the server responds with the created quote including an ID
+        localQuotes.push(data);
+        localStorage.setItem('quotes', JSON.stringify(localQuotes));
+        showNotification(`New quote created: "${data.title}"`);
+        displayQuotes();
+    } catch (error) {
+        console.error('Error creating quote:', error);
+    }
 }
 
 // Function to show notifications
@@ -220,3 +232,4 @@ document.getElementById('createQuote').addEventListener('click', createQuote);
 // Initial fetch of quotes
 fetchQuotesFromServer();
 
+});
