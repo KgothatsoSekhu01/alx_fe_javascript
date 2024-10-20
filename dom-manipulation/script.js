@@ -150,7 +150,7 @@ let localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
 async function fetchQuotes() {
     try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const data = await response.json();
+        const data = await response.json("fetchQuotesFromServer");
         handleNewQuotes(data);
     } catch (error) {
         console.error('Error fetching quotes:', error);
