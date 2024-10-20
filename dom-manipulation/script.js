@@ -3,16 +3,15 @@ const newQuoteButton = document.getElementById('new-quote');
 const addQuoteButton = document.getElementById('add-quote');
 const quoteInput = document.getElementById('quote');
 const categoryInput = document.getElementById('category');
-const exportButton = document.getElementById('export-quotes');
-const importInput = document.getElementById('importFile');
 const categoryFilter = document.getElementById('categoryFilter');
-const notification = document.getElementById('notification'); // New notification element
+const notification = document.getElementById('notification');
 
 let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
 let selectedCategory = localStorage.getItem('selectedCategory') || 'all';
 
 // Simulated server URL
-const serverUrl = 'https://jsonplaceholder.typicode.com/posts'; // This will be a mock server
+const serverUrl = 'https://jsonplaceholder.typicode.com/posts'; // Mock API
+let conflictResolutionQueue = [];
 
 // Function to display quotes based on the selected category
 function displayQuotes() {
@@ -104,17 +103,19 @@ function handleFetchedQuotes(serverQuotes) {
     let updated = false;
     serverQuotes.forEach(serverQuote => {
         const existingQuoteIndex = quotes.findIndex(q => q.text === serverQuote.title);
+        
+        // If quote from server doesn't exist locally, add it
         if (existingQuoteIndex === -1) {
-            // New quote, add to local storage
             quotes.push({ text: serverQuote.title, category: 'Imported' });
             updated = true;
         } else {
             // Conflict detected: existing quote with the same text
-            // Assume server data takes precedence
             const existingQuote = quotes[existingQuoteIndex];
             if (existingQuote.category !== 'Imported') {
-                // If existing quote is not imported, resolve conflict
-                quotes[existingQuoteIndex] = { text: serverQuote.title, category: existingQuote.category };
+                conflictResolutionQueue.push({
+                    localQuote: existingQuote,
+                    serverQuote: serverQuote.title,
+                });
                 updated = true;
             }
         }
@@ -124,30 +125,19 @@ function handleFetchedQuotes(serverQuotes) {
         saveQuotes();
         populateCategories();
         displayQuotes();
-        showNotification('Data has been updated from the server.');
+        notifyUserOfUpdates();
     }
 }
 
-// Import function (remains unchanged)
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(event) {
-        try {
-            const importedQuotes = JSON.parse(event.target.result);
-            if (Array.isArray(importedQuotes)) {
-                quotes.push(...importedQuotes);
-                saveQuotes();
-                populateCategories();
-                displayQuotes();
-                alert('Quotes imported successfully!');
-            } else {
-                alert('Invalid format: The imported file must contain an array of quotes.');
-            }
-        } catch (e) {
-            alert('Error importing quotes: ' + e.message);
-        }
-    };
-    fileReader.readAsText(event.target.files[0]);
+// Notify user of updates and conflicts
+function notifyUserOfUpdates() {
+    if (conflictResolutionQueue.length > 0) {
+        const message = `New quotes have been fetched from the server. ${conflictResolutionQueue.length} conflict(s) detected.`;
+        showNotification(message);
+        promptConflictResolution();
+    } else {
+        showNotification('New quotes have been fetched from the server.');
+    }
 }
 
 // Show notification to the user
@@ -159,10 +149,24 @@ function showNotification(message) {
     }, 5000); // Hide after 5 seconds
 }
 
+// Prompt user for conflict resolution
+function promptConflictResolution() {
+    conflictResolutionQueue.forEach(conflict => {
+        const resolve = confirm(`Conflict detected: "${conflict.localQuote.text}" vs "${conflict.serverQuote}". Accept server version?`);
+        if (resolve) {
+            const index = quotes.findIndex(q => q.text === conflict.localQuote.text);
+            quotes[index] = { text: conflict.serverQuote, category: conflict.localQuote.category };
+        }
+    });
+    conflictResolutionQueue = [];
+    saveQuotes();
+    populateCategories();
+    displayQuotes();
+}
+
 // Event listeners
 newQuoteButton.addEventListener('click', displayQuotes);
 addQuoteButton.addEventListener('click', addQuote);
-exportButton.addEventListener('click', exportQuotes);
 
 // Load last viewed quote from session storage and filter preference
 if (sessionStorage.getItem('lastViewedQuote')) {
