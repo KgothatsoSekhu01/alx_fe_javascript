@@ -6,9 +6,13 @@ const categoryInput = document.getElementById('category');
 const exportButton = document.getElementById('export-quotes');
 const importInput = document.getElementById('importFile');
 const categoryFilter = document.getElementById('categoryFilter');
+const notification = document.getElementById('notification'); // New notification element
 
 let quotes = JSON.parse(localStorage.getItem('quotes')) || [];
 let selectedCategory = localStorage.getItem('selectedCategory') || 'all';
+
+// Simulated server URL
+const serverUrl = 'https://jsonplaceholder.typicode.com/posts'; // This will be a mock server
 
 // Function to display quotes based on the selected category
 function displayQuotes() {
@@ -25,7 +29,7 @@ function displayQuotes() {
 
 // Function to populate categories dynamically
 function populateCategories() {
-    const categories = [...new Set(quotes.map(q => q.category))]; // Extract unique categories
+    const categories = [...new Set(quotes.map(q => q.category))];
     categoryFilter.innerHTML = '<option value="all">All Categories</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -47,18 +51,81 @@ function addQuote() {
     const newQuoteText = quoteInput.value.trim();
     const newCategory = categoryInput.value.trim();
     if (newQuoteText && newCategory) {
-        quotes.push({ text: newQuoteText, category: newCategory });
+        const newQuote = { text: newQuoteText, category: newCategory };
+        quotes.push(newQuote);
         saveQuotes();
+        postQuoteToServer(newQuote); // Simulate posting to the server
         quoteInput.value = '';
         categoryInput.value = '';
         displayQuotes();
-        populateCategories(); // Update categories after adding a new quote
+        populateCategories();
     }
 }
 
 // Function to save quotes to local storage
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
+}
+
+// Function to post a quote to the server (simulation)
+function postQuoteToServer(quote) {
+    fetch(serverUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quote),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Quote posted successfully:', data);
+    })
+    .catch((error) => {
+        console.error('Error posting quote:', error);
+    });
+}
+
+// Function to fetch quotes from the server periodically
+function fetchQuotesFromServer() {
+    setInterval(() => {
+        fetch(serverUrl)
+            .then(response => response.json())
+            .then(data => {
+                handleFetchedQuotes(data);
+            })
+            .catch(error => {
+                console.error('Error fetching quotes from server:', error);
+            });
+    }, 30000); // Fetch every 30 seconds
+}
+
+// Handle new quotes fetched from the server
+function handleFetchedQuotes(serverQuotes) {
+    let updated = false;
+    serverQuotes.forEach(serverQuote => {
+        const existingQuoteIndex = quotes.findIndex(q => q.text === serverQuote.title);
+        if (existingQuoteIndex === -1) {
+            // New quote, add to local storage
+            quotes.push({ text: serverQuote.title, category: 'Imported' });
+            updated = true;
+        } else {
+            // Conflict detected: existing quote with the same text
+            // Assume server data takes precedence
+            const existingQuote = quotes[existingQuoteIndex];
+            if (existingQuote.category !== 'Imported') {
+                // If existing quote is not imported, resolve conflict
+                quotes[existingQuoteIndex] = { text: serverQuote.title, category: existingQuote.category };
+                updated = true;
+            }
+        }
+    });
+
+    if (updated) {
+        saveQuotes();
+        populateCategories();
+        displayQuotes();
+        showNotification('Data has been updated from the server.');
+    }
 }
 
 // Import function (remains unchanged)
@@ -70,7 +137,7 @@ function importFromJsonFile(event) {
             if (Array.isArray(importedQuotes)) {
                 quotes.push(...importedQuotes);
                 saveQuotes();
-                populateCategories(); // Update categories after importing
+                populateCategories();
                 displayQuotes();
                 alert('Quotes imported successfully!');
             } else {
@@ -81,6 +148,15 @@ function importFromJsonFile(event) {
         }
     };
     fileReader.readAsText(event.target.files[0]);
+}
+
+// Show notification to the user
+function showNotification(message) {
+    notification.innerText = message;
+    notification.style.display = 'block';
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000); // Hide after 5 seconds
 }
 
 // Event listeners
@@ -100,3 +176,5 @@ populateCategories();
 categoryFilter.value = selectedCategory; // Restore last selected filter
 filterQuotes(); // Display quotes based on the last selected category
 
+// Start fetching quotes from the server
+fetchQuotesFromServer();
