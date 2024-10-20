@@ -17,6 +17,13 @@
         input, button {
             margin: 5px;
         }
+        .quote {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -30,6 +37,10 @@
         <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
         <button id="addQuoteButton">Add Quote</button>
     </div>
+
+    <h2>Import/Export Quotes</h2>
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
+    <button id="exportButton">Export Quotes</button>
 
     <script src="script.js"></script>
 </body>
