@@ -152,6 +152,7 @@ async function fetchQuotesFromServer() {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         const data = await response.json();
         handleNewQuotes(data);
+         showNotification("Quotes synced with server!"); // Notify successful sync
     } catch (error) {
         console.error('Error fetching quotes:', error);
     }
