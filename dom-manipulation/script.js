@@ -140,14 +140,15 @@ window.onload = function() {
         const quote = JSON.parse(lastViewedQuote);
         document.getElementById("quoteDisplay").innerHTML = `"${quote.text}" - <strong>${quote.category}</strong>`;
     }
-const quotesContainer = document.getElementById('quotes');
+
+};const quotesContainer = document.getElementById('quotes');
 const notificationDiv = document.getElementById('notification');
 
 // Simulated local storage for quotes
 let localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
-// Function to fetch quotes
-async function fetchQuotes() {
+// Function to fetch quotes from the server
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         const data = await response.json();
@@ -168,8 +169,7 @@ function handleNewQuotes(serverQuotes) {
             showNotification(`New quote added: "${serverQuote.title}"`);
         } else if (localQuote.title !== serverQuote.title || localQuote.body !== serverQuote.body) {
             // Conflict detected
-            showNotification(`Conflict detected for quote ID ${serverQuote.id}. Server data takes precedence.`);
-            Object.assign(localQuote, serverQuote); // Resolve conflict by taking server data
+            showConflictResolutionOptions(localQuote, serverQuote);
         }
     });
 
@@ -212,12 +212,11 @@ function showNotification(message) {
 }
 
 // Set up periodic fetching of quotes
-setInterval(fetchQuotes, 10000); // Fetch every 10 seconds
+setInterval(fetchQuotesFromServer, 10000); // Fetch every 10 seconds
 
 // Event listener for the button to create a new quote
 document.getElementById('createQuote').addEventListener('click', createQuote);
 
 // Initial fetch of quotes
-fetchQuotes();
+fetchQuotesFromServer();
 
-};
