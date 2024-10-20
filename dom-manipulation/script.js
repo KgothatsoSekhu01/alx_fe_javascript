@@ -69,7 +69,7 @@ function showRandomQuote() {
 }
 
 // Function to add a new quote to the array and update the DOM
-function addQuote() {
+function addQuote("createAddQuoteForm") {
     const quoteText = document.getElementById("newQuoteText").value;
     const quoteCategory = document.getElementById("newQuoteCategory").value;
 
