@@ -27,6 +27,17 @@ function populateCategories() {
         categoryFilter.appendChild(option);
     });
 }
+}
+
+// Periodically check for new quotes from the server
+setInterval(fetchQuotesFromServer, 30000); // Fetch every 30 seconds
+
+// Event Listeners
+window.onload = function() {
+    loadQuotes();
+    populateCategories();
+    fetchQuotesFromServer(); // Initial fetch
+};
 
 // Function to display quotes based on the selected category
 function filterQuotes() {
@@ -130,7 +141,37 @@ document.getElementById("exportButton").addEventListener("click", exportQuotes);
 window.onload = function() {
     loadQuotes();
     populateCategories();
+function notifyUser(message) {
+    const notification = document.createElement("div");
+    notification.textContent = message;
+    notification.style.backgroundColor = "#f0ad4e"; // Bootstrap warning color
+    notification.style.padding = "10px";
+    notification.style.margin = "10px 0";
+    document.body.prepend(notification);
 
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Modify handleFetchedQuotes to include notification
+function handleFetchedQuotes(serverQuotes) {
+    let newQuotesAdded = false;
+    serverQuotes.forEach(serverQuote => {
+        const existingQuote = quotes.find(q => q.text === serverQuote.text);
+        if (!existingQuote) {
+            quotes.push(serverQuote);
+            newQuotesAdded = true;
+        }
+    });
+    if (newQuotesAdded) {
+        notifyUser("New quotes have been added from the server!");
+    }
+    saveQuotes();
+    populateCategories();
+    filterQuotes();
+}
+    
     const lastSelectedCategory = localStorage.getItem('lastSelectedCategory') || "all";
     document.getElementById("categoryFilter").value = lastSelectedCategory;
     filterQuotes(); // Display quotes based on the last selected category
