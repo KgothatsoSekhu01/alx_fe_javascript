@@ -1,38 +1,38 @@
 // script.js
 
-// Function to load quotes from local storage
+// Initialize an array to hold quote objects
+let quotes = [];
+
+// Load quotes from local storage
 function loadQuotes() {
     const storedQuotes = localStorage.getItem('quotes');
     if (storedQuotes) {
-        return JSON.parse(storedQuotes);
+        quotes = JSON.parse(storedQuotes);
     }
-    return [
-        { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Motivation" },
-        { text: "Life is 10% what happens to us and 90% how we react to it.", category: "Life" },
-        { text: "Your time is limited, don't waste it living someone else's life.", category: "Inspiration" }
-    ];
 }
 
-// Initialize quotes from local storage
-let quotes = loadQuotes();
-
-// Function to save quotes to local storage
+// Save quotes to local storage
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Function to show a random quote
+// Function to display a random quote
 function showRandomQuote() {
+    const quoteDisplay = document.getElementById('quoteDisplay');
     if (quotes.length === 0) {
-        document.getElementById('quoteDisplay').innerText = "No quotes available. Please add some!";
+        quoteDisplay.innerText = "No quotes available. Please add some!";
         return;
     }
-    const randomIndex = Math.floor(Math.random() * quotes.length);
-    const randomQuote = quotes[randomIndex];
-    document.getElementById('quoteDisplay').innerText = `"${randomQuote.text}" - ${randomQuote.category}`;
-    
-    // Save last viewed quote in session storage
-    sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
+
+    const filteredQuotes = getFilteredQuotes();
+    if (filteredQuotes.length === 0) {
+        quoteDisplay.innerText = "No quotes available for this category.";
+        return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const randomQuote = filteredQuotes[randomIndex];
+    quoteDisplay.innerText = `"${randomQuote.text}" - ${randomQuote.category}`;
 }
 
 // Function to add a new quote
@@ -49,60 +49,56 @@ function addQuote() {
         text: quoteText,
         category: quoteCategory
     };
-    
-    quotes.push(newQuote);
-    saveQuotes();  // Save updated quotes to local storage
 
-    // Clear input fields
+    quotes.push(newQuote);
+    saveQuotes();
+    populateCategories();  // Update category options
+
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
-
     alert("Quote added!");
 }
 
-// Function to export quotes to JSON
-function exportQuotes() {
-    const dataStr = JSON.stringify(quotes, null, 2); // Format for readability
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'quotes.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+// Function to populate categories in the dropdown
+function populateCategories() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const categories = [...new Set(quotes.map(q => q.category))];
+
+    // Clear existing options
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+
+    // Populate with new categories
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.innerText = category;
+        categoryFilter.appendChild(option);
+    });
+
+    // Restore the last selected category
+    const lastSelectedCategory = localStorage.getItem('lastSelectedCategory') || 'all';
+    categoryFilter.value = lastSelectedCategory;
 }
 
-// Function to import quotes from JSON
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(e) {
-        try {
-            const importedQuotes = JSON.parse(e.target.result);
-            if (Array.isArray(importedQuotes)) {
-                quotes.push(...importedQuotes);
-                saveQuotes();  // Save new quotes to local storage
-                alert('Quotes imported successfully!');
-            } else {
-                alert('Invalid file format. Please upload a valid JSON file.');
-            }
-        } catch (error) {
-            alert('Error parsing JSON: ' + error.message);
-        }
-    };
-    fileReader.readAsText(event.target.files[0]);
+// Function to filter quotes based on selected category
+function filterQuotes() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const selectedCategory = categoryFilter.value;
+    localStorage.setItem('lastSelectedCategory', selectedCategory);  // Save the last selected category
+    showRandomQuote();  // Update the displayed quote based on the new filter
 }
 
-// Event listeners
-document.getElementById('newQuote').addEventListener('click', showRandomQuote);
-document.getElementById('addQuoteBtn').addEventListener('click', addQuote);
-document.getElementById('exportBtn').addEventListener('click', exportQuotes);
-document.getElementById('importFile').addEventListener('change', importFromJsonFile);
-
-// Load last viewed quote from session storage (if available)
-const lastQuote = sessionStorage.getItem('lastViewedQuote');
-if (lastQuote) {
-    const lastViewedQuote = JSON.parse(lastQuote);
-    document.getElementById('quoteDisplay').innerText = `"${lastViewedQuote.text}" - ${lastViewedQuote.category}`;
+// Get filtered quotes based on selected category
+function getFilteredQuotes() {
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    if (categoryFilter === 'all') {
+        return quotes;
+    }
+    return quotes.filter(quote => quote.category === categoryFilter);
 }
+
+// Load quotes when the page is loaded
+window.onload = function() {
+    loadQuotes();
+    populateCategories();  // Populate categories when the page loads
+};
