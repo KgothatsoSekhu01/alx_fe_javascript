@@ -177,6 +177,10 @@ function handleNewQuotes(serverQuotes) {
     displayQuotes();
 }
 
+// Function to sync quotes
+async function syncQuotes() {
+    await fetchQuotesFromServer();
+}
 // Function to display quotes
 function displayQuotes() {
     quotesContainer.innerHTML = ''; // Clear previous quotes
