@@ -9,13 +9,17 @@
     <div id="quote-container">
         <p id="quote-display"></p>
         <button id="new-quote">New Quote</button>
+         <select id="categoryFilter" onchange="filterQuotes()">
+        <option value="all">All Categories</option>
+        <!-- Dynamically populated categories -->
+    </select>
     </div>
     <div id="quote-input">
         <input type="text" id="quote" placeholder="Enter a new quote">
         <button id="add-quote">Add Quote</button>
     </div>
     <button id="export-quotes">Export Quotes</button>
-    <input type="file" id="import-quotes" accept=".json">
+  <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
     <script src="script.js"></script>
 </body>
 </html>
