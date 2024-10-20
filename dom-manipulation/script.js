@@ -16,7 +16,7 @@ function showRandomQuote() {
 }
 
 // Function to add a new quote to the array and update the DOM
-function addQuote("createAddQuoteForm") {
+function addQuote() {
     const quoteText = document.getElementById("newQuoteText").value;
     const quoteCategory = document.getElementById("newQuoteCategory").value;
 
@@ -28,10 +28,19 @@ function addQuote("createAddQuoteForm") {
         document.getElementById("newQuoteText").value = '';
         document.getElementById("newQuoteCategory").value = '';
 
-        alert("Quote added!");
+        // Create a new quote element and append it to the display
+        const quoteDisplay = document.getElementById("quoteDisplay");
 
-        // Optionally show the newly added quote
-        showRandomQuote();
+        const newQuoteDiv = document.createElement("div");
+        newQuoteDiv.innerHTML = `"${quoteText}" - <strong>${quoteCategory}</strong>`;
+        
+        // Optionally add a class for styling
+        newQuoteDiv.className = "quote";
+
+        // Append the new quote to the quote display area
+        quoteDisplay.appendChild(newQuoteDiv);
+
+        alert("Quote added!");
     } else {
         alert("Please fill in both fields.");
     }
